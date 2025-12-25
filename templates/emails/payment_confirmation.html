@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán thành công - OWLS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .content h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .content p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .payment-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .payment-info h3 {
+            color: #155724;
+            margin-top: 0;
+        }
+
+        .payment-info p {
+            color: #155724;
+            margin: 5px 0;
+        }
+
+        .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Thanh toán thành công!</h1>
+        </div>
+        <div class="content">
+            <h2>Xin chào {{ payment.user.first_name|default:payment.user.username }}!</h2>
+            <p>Thanh toán cho đơn hàng <strong>#{{ order.order_number }}</strong> đã được xác nhận thành công.</p>
+
+            <div class="amount">{{ payment.amount|floatformat:0 }}đ</div>
+
+            <div class="payment-info">
+                <h3>✅ Chi tiết thanh toán</h3>
+                <p><strong>Mã thanh toán:</strong> {{ payment.id }}</p>
+                <p><strong>Phương thức:</strong> {{ payment.get_payment_method_display }}</p>
+                <p><strong>Thời gian:</strong> {{ payment.paid_at|date:"d/m/Y H:i" }}</p>
+                <p><strong>Trạng thái:</strong> Hoàn thành</p>
+            </div>
+
+            <p>Đơn hàng của bạn sẽ sớm được xử lý và giao đến bạn.</p>
+            <p>Cảm ơn bạn đã mua sắm tại {{ site_name }}!</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 {{ site_name }}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>

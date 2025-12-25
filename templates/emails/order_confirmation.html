@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đơn hàng - OWLS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .content h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .content p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .order-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .order-info h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .order-info p {
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background: #f0f0f0;
+        }
+
+        .total-row td {
+            border-top: 2px solid #333;
+        }
+
+        .success-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Đặt hàng thành công!</h1>
+        </div>
+        <div class="content">
+            <h2>Cảm ơn bạn đã đặt hàng, {{ order.user.first_name|default:order.user.username }}!</h2>
+            <p>Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.</p>
+
+            <div class="order-info">
+                <h3>📦 Thông tin đơn hàng</h3>
+                <p><strong>Mã đơn hàng:</strong> #{{ order.order_number }}</p>
+                <p><strong>Ngày đặt:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                <p><strong>Trạng thái:</strong> <span class="success-badge">{{ order.get_status_display }}</span></p>
+                <p><strong>Phương thức thanh toán:</strong> {{ order.get_payment_method_display }}</p>
+            </div>
+
+            <div class="order-info">
+                <h3>📍 Địa chỉ giao hàng</h3>
+                <p><strong>{{ order.recipient_name }}</strong></p>
+                <p>{{ order.phone }}</p>
+                <p>{{ order.address }}, {{ order.ward }}, {{ order.district }}, {{ order.city }}</p>
+            </div>
+
+            <h3>🛒 Chi tiết đơn hàng</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th style="text-align: center;">SL</th>
+                        <th style="text-align: right;">Giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td style="text-align: right;">{{ item.subtotal|floatformat:0 }}đ</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="2">Tạm tính</td>
+                        <td style="text-align: right;">{{ order.subtotal|floatformat:0 }}đ</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Phí vận chuyển</td>
+                        <td style="text-align: right;">{{ order.shipping_fee|floatformat:0 }}đ</td>
+                    </tr>
+                    {% if order.discount > 0 %}
+                    <tr>
+                        <td colspan="2">Giảm giá</td>
+                        <td style="text-align: right; color: #28a745;">-{{ order.discount|floatformat:0 }}đ</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td colspan="2">Tổng cộng</td>
+                        <td style="text-align: right; font-size: 18px;">{{ order.total|floatformat:0 }}đ</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {% if order.note %}
+            <p><strong>Ghi chú:</strong> {{ order.note }}</p>
+            {% endif %}
+
+            <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 {{ site_name }}. All rights reserved.</p>
+            <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+        </div>
+    </div>
+</body>
+
+</html>
