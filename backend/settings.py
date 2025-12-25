@@ -83,8 +83,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- INTERNATIONALIZATION ---
-LANGUAGE_CODE = 'vi'
-TIME_ZONE = 'Asia/Ho_Chi_Minh'
+LANGUAGE_CODE = os.getenv('DJANGO_LANGUAGE_CODE', 'vi')
+TIME_ZONE = os.getenv('DJANGO_TIME_ZONE', 'Asia/Ho_Chi_Minh')
 USE_I18N = True
 USE_TZ = True
 
@@ -131,7 +131,7 @@ else:
     }
 
 # --- EMAIL SETTINGS ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
@@ -168,7 +168,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 12,
+    'PAGE_SIZE': int(os.getenv('DJANGO_PAGE_SIZE', 12)),
     # Rate Limiting / Throttling
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
@@ -177,7 +177,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': os.getenv('THROTTLE_RATE_ANON', '100/min'),
         'user': os.getenv('THROTTLE_RATE_USER', '1000/min'),
-        'login': '5/min',  # Strict limit for login attempts
+        'login': os.getenv('THROTTLE_RATE_LOGIN', '5/min'),  # Strict limit for login attempts
     },
     # API Documentation
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -198,8 +198,8 @@ SPECTACULAR_SETTINGS = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', 60))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 7))),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
@@ -207,26 +207,33 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
 }
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "http://192.168.1.111:3000",
-    # Production
-    "https://owls.asia",
-    "https://www.owls.asia",
-]
+# --- CORS Configuration ---
+# Khởi tạo danh sách rỗng
+CORS_ALLOWED_ORIGINS = []
 
-# Add production frontend URLs from environment
-if os.getenv('FRONTEND_URL'):
-    CORS_ALLOWED_ORIGINS.append(os.getenv('FRONTEND_URL'))
+# 1. Nếu đang ở chế độ DEBUG (Local), tự động thêm các domain localhost để Dev
+if DEBUG:
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
 
-# Add additional CORS origins from environment (comma-separated)
-extra_origins = os.getenv('CORS_ALLOWED_ORIGINS', '')
+# 2. Luôn lấy thêm domain từ biến môi trường (cho cả Dev và Prod)
+# Biến FRONTEND_URL: Dùng cho domain chính
+frontend_url = os.getenv('FRONTEND_URL')
+if frontend_url:
+    CORS_ALLOWED_ORIGINS.append(frontend_url)
+
+# Biến EXTRA_CORS_ORIGINS: Dùng cho danh sách các domain phụ khác
+# Ví dụ trong .env: EXTRA_CORS_ORIGINS=https://admin.owls.asia,https://mobile.owls.asia
+extra_origins = os.getenv('EXTRA_CORS_ORIGINS', '')
 if extra_origins:
     CORS_ALLOWED_ORIGINS.extend([origin.strip() for origin in extra_origins.split(',') if origin.strip()])
+
+# Loại bỏ trùng lặp
+CORS_ALLOWED_ORIGINS = list(set(CORS_ALLOWED_ORIGINS))
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [

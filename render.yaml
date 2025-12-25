@@ -1,0 +1,42 @@
+# Render.com deployment configuration
+# https://docs.render.com/blueprint-spec
+
+services:
+  - type: web
+    name: owls-backend
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn backend.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: owls-db
+          property: connectionString
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: USE_S3
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_ENDPOINT_URL
+        sync: false
+      - key: AWS_S3_CUSTOM_DOMAIN
+        sync: false
+
+databases:
+  - name: owls-db
+    plan: free
+    databaseName: owls
+    user: owls_user
