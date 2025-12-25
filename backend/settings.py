@@ -38,6 +38,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -119,6 +120,15 @@ else:
     STATIC_ROOT = BASE_DIR / 'staticfiles'
     MEDIA_URL = 'media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    # Use WhiteNoise for static files in production
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # --- EMAIL SETTINGS ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -197,6 +207,7 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
 }
 
+# CORS Configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -204,7 +215,36 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
     "http://192.168.1.111:3000",
 ]
+
+# Add production frontend URLs from environment
+if os.getenv('FRONTEND_URL'):
+    CORS_ALLOWED_ORIGINS.append(os.getenv('FRONTEND_URL'))
+
+# Add additional CORS origins from environment (comma-separated)
+extra_origins = os.getenv('CORS_ALLOWED_ORIGINS', '')
+if extra_origins:
+    CORS_ALLOWED_ORIGINS.extend([origin.strip() for origin in extra_origins.split(',') if origin.strip()])
+
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 # --- SECURITY SETTINGS ---
 # Security headers (enable in production)
