@@ -214,6 +214,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
     "http://192.168.1.111:3000",
+    # Production
+    "https://owls.asia",
+    "https://www.owls.asia",
 ]
 
 # Add production frontend URLs from environment
