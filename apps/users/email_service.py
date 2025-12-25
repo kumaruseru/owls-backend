@@ -41,7 +41,7 @@ class EmailService:
                 to=[to_email] if isinstance(to_email, str) else to_email,
             )
             email.attach_alternative(html_content, "text/html")
-            email.send()
+            email.send(fail_silently=True)
             
             logger.info(f"Email sent successfully to {to_email}: {subject}")
             return True
