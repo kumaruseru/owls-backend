@@ -46,9 +46,26 @@ class GithubCallbackView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        from django.core.cache import cache
+        
         code = request.data.get('code')
+        state = request.data.get('state')
+        
         if not code:
             return Response({"error": "Code is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate state for CSRF protection
+        if not state:
+            return Response({"error": "State parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        cache_key = f"oauth_state_{state}"
+        cached_provider = cache.get(cache_key)
+        
+        if cached_provider != 'github':
+            return Response({"error": "Invalid or expired state. Please try again."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Consume the state token (one-time use)
+        cache.delete(cache_key)
 
         # 1. Exchange code for access token
         token_url = "https://github.com/login/oauth/access_token"
@@ -194,13 +211,26 @@ class GoogleCallbackView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        from django.core.cache import cache
+        
         code = request.data.get('code')
-        # If user is linking account, they should send their current access token in Authorization header 
-        # (permissions.AllowAny typically, but we check request.user manually if needed? 
-        # Actually standard DRF auth middleware runs before view, so request.user is set if token sent)
+        state = request.data.get('state')
         
         if not code:
             return Response({"error": "Code is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate state for CSRF protection
+        if not state:
+            return Response({"error": "State parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        cache_key = f"oauth_state_{state}"
+        cached_provider = cache.get(cache_key)
+        
+        if cached_provider != 'google':
+            return Response({"error": "Invalid or expired state. Please try again."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Consume the state token (one-time use)
+        cache.delete(cache_key)
 
         # 1. Exchange code for access token
         token_url = "https://oauth2.googleapis.com/token"
