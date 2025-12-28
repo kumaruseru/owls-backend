@@ -144,7 +144,9 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(email=email, is_deleted=False)
             EmailService.send_password_reset_email(user, request)
+            # print(f"DEBUG: Password reset requested for found user: {email}")
         except User.DoesNotExist:
+            # print(f"DEBUG: Password reset requested for NON-EXISTENT user: {email}")
             pass  # Don't reveal if email exists
         
         return Response({'message': 'Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu'})

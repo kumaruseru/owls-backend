@@ -21,6 +21,7 @@ class EmailService:
         
         def _send():
             try:
+                # print(f"DEBUG: Startup sending email to {recipient_email}...") 
                 send_mail(
                     subject=subject,
                     message=message,
@@ -30,11 +31,13 @@ class EmailService:
                     fail_silently=False,
                 )
                 logger.info(f"Email sent successfully to {recipient_email}")
+                # print(f"DEBUG: Success sending email to {recipient_email}")
             except Exception as e:
                 logger.error(f"Failed to send email to {recipient_email}: {e}")
+                # print(f"DEBUG: Error sending email: {e}")
 
-        # Execute in background thread to prevent blocking response
-        email_thread = threading.Thread(target=_send, daemon=True)
+        # Execute in background thread (non-daemon to ensure completion)
+        email_thread = threading.Thread(target=_send, daemon=False)
         email_thread.start()
         
         return True
