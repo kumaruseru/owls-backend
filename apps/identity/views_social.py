@@ -18,21 +18,23 @@ class GithubLoginView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        import secrets
+        from django.core.cache import cache
+        
         client_id = settings.GITHUB_CLIENT_ID
-        # Callback URL registered in GitHub App must match strict redirection
-        # Frontend handles the callback, so we tell GitHub to redirect to Frontend
-        # But wait, typically OAuth flow redirects browser.
-        # If we redirect to Frontend Callback, the URI must match what IS configured in GitHub.
-        # Assuming http://localhost:3000/auth/callback is configured.
         redirect_uri = f"{settings.FRONTEND_URL}/auth/callback" 
         scope = "user:email"
+        
+        # Generate cryptographic state token for CSRF protection
+        state = secrets.token_urlsafe(32)
+        cache.set(f"oauth_state_{state}", 'github', timeout=600)  # 10 min
         
         github_auth_url = (
             f"https://github.com/login/oauth/authorize"
             f"?client_id={client_id}"
             f"&redirect_uri={redirect_uri}"
             f"&scope={scope}"
-            f"&state=github"
+            f"&state={state}"
         )
         return redirect(github_auth_url)
 
@@ -161,9 +163,16 @@ class GoogleLoginView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        import secrets
+        from django.core.cache import cache
+        
         client_id = settings.GOOGLE_CLIENT_ID
         redirect_uri = f"{settings.FRONTEND_URL}/auth/callback" 
         scope = "profile email"
+        
+        # Generate cryptographic state token for CSRF protection
+        state = secrets.token_urlsafe(32)
+        cache.set(f"oauth_state_{state}", 'google', timeout=600)  # 10 min
         
         google_auth_url = (
             f"https://accounts.google.com/o/oauth2/v2/auth"
@@ -173,7 +182,7 @@ class GoogleLoginView(views.APIView):
             f"&scope={scope}"
             f"&access_type=offline"
             f"&prompt=consent"
-            f"&state=google"
+            f"&state={state}"
         )
         return redirect(google_auth_url)
 

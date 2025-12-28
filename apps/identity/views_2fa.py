@@ -60,7 +60,7 @@ class Confirm2FAView(views.APIView):
         if not user.two_factor_secret:
             return Response({"error": "No 2FA setup started."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if TwoFactorService.verify_totp(user.two_factor_secret, code):
+        if TwoFactorService.verify_totp(user.two_factor_secret, code, user_id=user.id):
             # Generate backup codes
             backup_codes = TwoFactorService.generate_backup_codes()
             
@@ -116,7 +116,7 @@ class Login2FAView(views.APIView):
             # But here we just check valid logic.
             
             # Try TOTP first
-            if TwoFactorService.verify_totp(user.two_factor_secret, code):
+            if TwoFactorService.verify_totp(user.two_factor_secret, code, user_id=user.id):
                 is_valid = True
             # Try Email OTP
             elif TwoFactorService.verify_email_otp(user, code):
@@ -174,6 +174,8 @@ class BackupCodesView(views.APIView):
     View or regenerate backup codes. Protected by password.
     """
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = '2fa_backup_codes'
 
     def post(self, request):
         password = request.data.get('password')
