@@ -17,7 +17,9 @@ sys.path.append(str(BASE_DIR / 'apps'))
 # --- CORE SETTINGS ---
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 DEBUG = env.bool('DJANGO_DEBUG', default=False)
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = [host.strip() for host in env.list('DJANGO_ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])]
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env.list('CORS_ALLOWED_ORIGINS', default=["http://localhost:3000"])]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in env.list('CSRF_TRUSTED_ORIGINS', default=["http://localhost:3000"])]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
