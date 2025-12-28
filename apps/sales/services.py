@@ -130,41 +130,35 @@ class OrderService:
         
 
             # Enforce server-side shipping fee calculation
-            shipping_fee = 0
+            shipping_fee = 30000 # Default fallback
             to_district_id = checkout_data.get('to_district_id')
             to_ward_code = checkout_data.get('to_ward_code')
             
-            if to_district_id and to_ward_code:
-                try:
-                    from apps.shipping.services import GHNService
-                    # Calculate total weight (500g per item default)
-                    total_weight = sum(item.quantity * 500 for item in cart_items)
-                    
-                    # Calculate fee
-                    fee_result = GHNService.calculate_shipping_fee(
-                        to_district_id=int(to_district_id),
-                        to_ward_code=str(to_ward_code),
-                        weight=total_weight
-                    )
-                    
-                    if fee_result.get('success'):
-                        shipping_fee = fee_result.get('total_fee', 0)
-                    else:
-                        logger.error(f"Failed to calculate shipping fee: {fee_result.get('message')}")
-                        # Fallback to client fee or default? 
-                        # For security, better to default to a safe value or fail, 
-                        # but to avoid UX breakage we might fallback to client fee IF REASONABLE,
-                        # However, the goal is to prevent 0 fee. 
-                        # Let's fallback to client fee BUT ensure it's not 0 if we failed to calc (risky).
-                        # Safest: Use 0 if failed (and handle later) or Trust client if API fails?
-                        # Let's trust client if API fails to avoid blocking orders, but log it.
-                        shipping_fee = checkout_data.get('shipping_fee', 0)
-                except Exception as e:
-                    logger.exception(f"Error calculating shipping fee: {e}")
-                    shipping_fee = checkout_data.get('shipping_fee', 0)
-            else:
-                # Pickup at store case? Or missing address.
-                shipping_fee = checkout_data.get('shipping_fee', 0)
+            # Security: Require valid GHN address mapping
+            if not to_district_id or not to_ward_code:
+                raise ValidationError({'error': 'Địa chỉ giao hàng không hợp lệ. Vui lòng chọn Tỉnh/Thành phố, Quận/Huyện từ danh sách gợi ý.'})
+
+            try:
+                from apps.shipping.services import GHNService
+                # Calculate total weight (500g per item default)
+                total_weight = sum(item.quantity * 500 for item in cart_items)
+                
+                # Calculate fee
+                fee_result = GHNService.calculate_shipping_fee(
+                    to_district_id=int(to_district_id),
+                    to_ward_code=str(to_ward_code),
+                    weight=total_weight
+                )
+                
+                if fee_result.get('success'):
+                    shipping_fee = fee_result.get('total_fee', 30000)
+                else:
+                    logger.error(f"Failed to calculate shipping fee: {fee_result.get('message')}")
+                    # Fallback to default 30k, Do NOT trust client fee
+                    shipping_fee = 30000
+            except Exception as e:
+                logger.exception(f"Error calculating shipping fee: {e}")
+                shipping_fee = 30000
 
             # Create Order
             order = Order.objects.create(
