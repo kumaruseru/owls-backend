@@ -263,3 +263,18 @@ GITHUB_CLIENT_ID = env('GITHUB_CLIENT_ID', default='')
 GITHUB_CLIENT_SECRET = env('GITHUB_CLIENT_SECRET', default='')
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
 GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
+
+# --- SENTRY ---
+SENTRY_DSN = env('SENTRY_DSN', default=None)
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', default=0.2),
+        send_default_pii=True,
+        environment=env('SENTRY_ENVIRONMENT', default='production'),
+    )
