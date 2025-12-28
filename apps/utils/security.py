@@ -431,12 +431,15 @@ def add_security_headers(response) -> None:
     
     # Content Security Policy (basic)
     if not settings.DEBUG:
+        cdn_domain = getattr(settings, 'AWS_S3_CUSTOM_DOMAIN', '')
+        cdn_source = f" https://{cdn_domain}" if cdn_domain else ""
+        
         response['Content-Security-Policy'] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            f"default-src 'self' {cdn_source}; "
+            f"script-src 'self' 'unsafe-inline' {cdn_source}; "
+            f"style-src 'self' 'unsafe-inline' {cdn_source} https://fonts.googleapis.com; "
+            f"img-src 'self' data: https: {cdn_source}; "
+            f"font-src 'self' https://fonts.gstatic.com {cdn_source}; "
         )
     
     # Permissions Policy
