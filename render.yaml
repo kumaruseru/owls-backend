@@ -5,7 +5,7 @@ services:
   - type: web
     name: owls-backend
     runtime: python
-    buildCommand: "./build.sh"
+    buildCommand: "chmod +x build.sh && ./build.sh"
     startCommand: "gunicorn backend.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
@@ -13,7 +13,7 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
-        value: "api.owls.asia,localhost,127.0.0.1" # Using value from .env, but can be overridden
+        value: "*" # Allow all hosts for initial deployment availability
       - key: DJANGO_SECURE_SSL_REDIRECT
         value: "True"
       - key: DATABASE_URL
