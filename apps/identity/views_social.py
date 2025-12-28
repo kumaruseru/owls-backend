@@ -164,7 +164,19 @@ class GithubCallbackView(views.APIView):
                 extra_data=user_data
             )
         
-        # 5. Generate Tokens
+        # 5. Check 2FA
+        if user.is_2fa_enabled:
+            from django.core.signing import TimestampSigner
+            signer = TimestampSigner()
+            temp_token = signer.sign(str(user.id))
+            
+            return Response({
+                'requires_2fa': True,
+                'temp_token': temp_token,
+                'message': 'Two-factor authentication required'
+            })
+
+        # 6. Generate Tokens
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
@@ -316,7 +328,19 @@ class GoogleCallbackView(views.APIView):
                 extra_data=user_data
             )
 
-        # 4. Generate Tokens
+        # 4. Check 2FA
+        if user.is_2fa_enabled:
+            from django.core.signing import TimestampSigner
+            signer = TimestampSigner()
+            temp_token = signer.sign(str(user.id))
+            
+            return Response({
+                'requires_2fa': True,
+                'temp_token': temp_token,
+                'message': 'Two-factor authentication required'
+            })
+
+        # 5. Generate Tokens
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),

@@ -176,6 +176,11 @@ class AuthService:
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            # Timing Attack Mitigation: Run a dummy password check
+            # so the response time is similar to a valid user.
+            from django.contrib.auth.hashers import make_password
+            User().set_password(password)
+            
             audit.log_login_attempt(email, False, ip, user_agent)
             return None, "Email hoặc mật khẩu không đúng"
         
