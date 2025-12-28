@@ -16,28 +16,21 @@ class EmailService:
     
     @staticmethod
     def _send_email(subject: str, message: str, recipient_email: str, html_message: Optional[str] = None) -> bool:
-        """Send email asynchronously with error handling."""
-        import threading
-        
-        def _send():
-            try:
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[recipient_email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-                logger.info(f"Email sent successfully to {recipient_email}")
-            except Exception as e:
-                logger.error(f"Failed to send email to {recipient_email}: {e}")
-
-        # Execute in background thread to prevent blocking response
-        email_thread = threading.Thread(target=_send)
-        email_thread.start()
-        
-        return True # Optimistically return True
+        """Send email with error handling."""
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[recipient_email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            logger.info(f"Email sent successfully to {recipient_email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send email to {recipient_email}: {e}")
+            return False
     
     @staticmethod
     def send_verification_email(user, request=None) -> bool:
