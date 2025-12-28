@@ -190,6 +190,12 @@ class ChangePasswordView(generics.UpdateAPIView):
     def get_object(self):
         return self.request.user
     
+        return Response({'message': 'Đổi mật khẩu thành công'}, status=status.HTTP_200_OK)
+    
+    def perform_update(self, serializer):
+        # Override to handle side effects if needed, but we did logic in update()
+        pass
+
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -202,8 +208,17 @@ class ChangePasswordView(generics.UpdateAPIView):
         user.set_password(serializer.validated_data['new_password'])
         user.last_password_change = timezone.now()
         user.save()
+
+        # Security: Blacklist all existing tokens to force re-login everywhere
+        try:
+            from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+            tokens = OutstandingToken.objects.filter(user=user)
+            for token in tokens:
+                BlacklistedToken.objects.get_or_create(token=token)
+        except Exception:
+            pass
         
-        return Response({'message': 'Đổi mật khẩu thành công'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'}, status=status.HTTP_200_OK)
 
 
 class DeleteAccountView(APIView):

@@ -257,6 +257,15 @@ class AuthService:
         ip = IPValidator.get_client_ip(request) if request else '0.0.0.0'
         audit.log_password_change(str(user.id), ip)
         
+        # Security: Blacklist all existing tokens
+        try:
+            from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+            tokens = OutstandingToken.objects.filter(user=user)
+            for token in tokens:
+                BlacklistedToken.objects.get_or_create(token=token)
+        except Exception:
+            pass
+            
         return user, None
     
     @staticmethod
