@@ -116,6 +116,18 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Invalid JSON format for attributes")
         return value
 
+    def validate_name(self, value):
+        from apps.utils.security import InputValidator
+        if InputValidator.detect_xss(value):
+            raise serializers.ValidationError("Product name contains invalid characters")
+        return InputValidator.sanitize_html(value)
+
+    def validate_description(self, value):
+        from apps.utils.security import InputValidator
+        if value and InputValidator.detect_xss(value):
+            raise serializers.ValidationError("Description contains invalid characters")
+        return InputValidator.sanitize_html(value) if value else value
+
     def create(self, validated_data):
         image = validated_data.pop('image', None)
         product = Product.objects.create(**validated_data)

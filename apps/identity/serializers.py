@@ -93,6 +93,24 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ('first_name', 'last_name', 'phone', 'avatar', 'address', 'city', 'district', 'ward',
                   'province_id', 'district_id', 'ward_code')
 
+    def validate_first_name(self, value):
+        from apps.utils.security import InputValidator
+        if value and InputValidator.detect_xss(value):
+            raise serializers.ValidationError('Họ chứa ký tự không hợp lệ')
+        return InputValidator.sanitize_html(value) if value else value
+
+    def validate_last_name(self, value):
+        from apps.utils.security import InputValidator
+        if value and InputValidator.detect_xss(value):
+            raise serializers.ValidationError('Tên chứa ký tự không hợp lệ')
+        return InputValidator.sanitize_html(value) if value else value
+
+    def validate_address(self, value):
+        from apps.utils.security import InputValidator
+        if value and InputValidator.detect_xss(value):
+            raise serializers.ValidationError('Địa chỉ chứa ký tự không hợp lệ')
+        return InputValidator.sanitize_html(value) if value else value
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)

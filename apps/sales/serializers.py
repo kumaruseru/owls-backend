@@ -59,7 +59,6 @@ class CheckoutSerializer(serializers.Serializer):
     ward = serializers.CharField(max_length=100, required=False, allow_blank=True)
     note = serializers.CharField(required=False, allow_blank=True)
     payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES)
-    # GHN Shipping fields
-    shipping_fee = serializers.IntegerField(required=False, default=0)
+    # GHN Shipping fields (fee is calculated server-side)
     to_district_id = serializers.IntegerField(required=False, allow_null=True)
     to_ward_code = serializers.CharField(required=False, allow_blank=True, allow_null=True)

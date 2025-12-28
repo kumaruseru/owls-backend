@@ -31,12 +31,28 @@ class TwoFactorService:
         return f"data:image/png;base64,{img_str}"
 
     @staticmethod
-    def verify_totp(secret, code):
-        """Verifies a TOTP code against the secret."""
+    def verify_totp(secret, code, user_id=None):
+        """Verifies a TOTP code against the secret with brute-force protection."""
         if not secret:
             return False
+        
+        # Brute-force protection
+        if user_id:
+            cache_key = f"2fa_attempts_{user_id}"
+            attempts = cache.get(cache_key, 0)
+            if attempts >= 5:
+                return False  # Locked out
+            
         totp = pyotp.TOTP(secret)
-        return totp.verify(code)
+        is_valid = totp.verify(code)
+        
+        if user_id:
+            if not is_valid:
+                cache.set(cache_key, attempts + 1, timeout=1800)  # 30 min lockout
+            else:
+                cache.delete(cache_key)  # Reset on success
+        
+        return is_valid
 
     @staticmethod
     def generate_backup_codes(count=12, length=6):
@@ -96,12 +112,31 @@ OWLS Store Team
 
     @staticmethod
     def verify_email_otp(user, code):
-        """Verifies the cached Email OTP."""
+        """Verifies the cached Email OTP with brute-force protection."""
+        # Brute-force protection
+        lock_key = f"2fa_email_lock_{user.id}"
+        attempts_key = f"2fa_email_attempts_{user.id}"
+        
+        if cache.get(lock_key):
+            return False  # User is locked out
+            
+        attempts = cache.get(attempts_key, 0)
+        
         cache_key = f"email_2fa_{user.id}"
         cached_otp = cache.get(cache_key)
         
         if cached_otp and str(cached_otp) == str(code):
-            # Invalidate after use
+            # Invalidate after use and reset attempts
             cache.delete(cache_key)
+            cache.delete(attempts_key)
             return True
+        
+        # Failed attempt
+        attempts += 1
+        if attempts >= 5:
+            cache.set(lock_key, True, timeout=1800)  # 30 min lockout
+            cache.delete(attempts_key)
+        else:
+            cache.set(attempts_key, attempts, timeout=300)  # Track for 5 min
+        
         return False
