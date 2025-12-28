@@ -80,27 +80,31 @@ class VNPayVerifyAPIView(APIView):
     permission_classes = (permissions.AllowAny,)
     
     def post(self, request):
-        logger.info(f"VNPay Verify API: {request.data}")
-        result = VNPayService.verify_return(request.data)
-        
-        if result['success']:
-            payment = Payment.objects.filter(id=result['payment_id']).first()
-            if payment:
-                if payment.status != 'completed':
-                    payment.transaction_id = result.get('transaction_id')
-                    payment.mark_as_completed()
-                    
-                    try:
-                        from apps.identity.services import EmailService
-                        EmailService.send_payment_success_email(payment)
-                    except Exception as e:
-                        logger.error(f"Failed to send email: {e}")
+        try:
+            logger.info(f"VNPay Verify API: {request.data}")
+            result = VNPayService.verify_return(request.data)
+            
+            if result['success']:
+                payment = Payment.objects.filter(id=result['payment_id']).first()
+                if payment:
+                    if payment.status != 'completed':
+                        payment.transaction_id = result.get('transaction_id')
+                        payment.mark_as_completed()
                         
-                return Response({'success': True, 'order_number': payment.order.order_number})
+                        try:
+                            from apps.identity.services import EmailService
+                            EmailService.send_payment_success_email(payment)
+                        except Exception as e:
+                            logger.error(f"Failed to send email: {e}")
+                            
+                    return Response({'success': True, 'order_number': payment.order.order_number})
+                else:
+                    return Response({'success': False, 'message': 'Payment not found'}, status=404)
             else:
-                return Response({'success': False, 'message': 'Payment not found'}, status=404)
-        else:
-             return Response({'success': False, 'message': result.get('message')}, status=400)
+                 return Response({'success': False, 'message': result.get('message')}, status=400)
+        except Exception as e:
+            logger.exception(f"VNPay verify error: {e}")
+            return Response({'success': False, 'message': f"Server Error: {str(e)}"}, status=500)
 
 
 class VNPayIPNView(APIView):
